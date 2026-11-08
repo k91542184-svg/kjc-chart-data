@@ -23,7 +23,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
 TICKER_FILE = os.path.join(ROOT, "tickers.txt")
 
-PERIOD = "6y"
+PERIOD = "max"   # 상장 이후 전체 (2026-11-08 변경, 기존 6y)
 MAX_RETRY = 3
 SLEEP = 1.2
 
