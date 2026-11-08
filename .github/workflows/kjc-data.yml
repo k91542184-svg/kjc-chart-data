@@ -55,11 +55,14 @@ jobs:
       - name: 데이터 수집
         run: python scripts/build_kjc_data.py
 
+      - name: 30분봉 수집 (최근 60일)
+        run: python scripts/build_kjc_30m.py || echo "30분봉 수집 실패 — 일봉은 계속 진행"
+
       - name: 변경분 커밋
         run: |
           git config user.name  "kjc-data-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data
+          git add data data30
           if git diff --staged --quiet; then
             echo "변경 없음 — 커밋하지 않습니다."
           else
