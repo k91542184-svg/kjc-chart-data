@@ -2,7 +2,8 @@ name: KJC 차트 데이터 수집
 
 on:
   schedule:
-    - cron: "0 23 * * 1-5"
+    - cron: "0 23 * * 1-5"   # 한국 08:00 (화~토)
+    - cron: "0 4 * * 1-5"    # 한국 13:00 (월~금) — 앱에서 새로 추가한 종목을 당일 수집
   workflow_dispatch:
 
 permissions:
@@ -30,6 +31,26 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install "yfinance>=0.2.40" pandas
+
+      - name: 앱 관심종목 합치기 (구글 드라이브 파일 이름)
+        env:
+          WATCH_ID: 1Y1OH9g0cRo0mbCqMvGrTwRd_jaGgqL7y
+        run: |
+          python - <<'PY'
+          import re, urllib.request
+          url = "https://drive.google.com/file/d/%s/view" % __import__("os").environ["WATCH_ID"]
+          try:
+              html = urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"}), timeout=30).read().decode("utf-8", "ignore")
+          except Exception as e:
+              print("관심종목 파일을 읽지 못함:", e); raise SystemExit(0)
+          m = re.search(r"KJC_WATCHLIST ([A-Z0-9.,\-]+)", html)
+          if not m:
+              print("관심종목 목록을 찾지 못함 — tickers.txt 만 사용"); raise SystemExit(0)
+          ticks = [t for t in m.group(1).split(",") if re.fullmatch(r"[A-Z0-9.\-]{1,10}", t)]
+          with open("tickers.txt", "a", encoding="utf-8") as f:
+              f.write("\n# --- 앱 관심종목 (자동) ---\n" + "\n".join(ticks) + "\n")
+          print("앱 관심종목 %d개 합침: %s" % (len(ticks), ",".join(ticks)))
+          PY
 
       - name: 데이터 수집
         run: python scripts/build_kjc_data.py
